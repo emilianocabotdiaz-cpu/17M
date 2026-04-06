@@ -52,6 +52,17 @@ function StatCard({ title, value }) {
   );
 }
 
+function LogoutButton({ onLogout }) {
+  return (
+    <button
+      onClick={onLogout}
+      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium"
+    >
+      Salir
+    </button>
+  );
+}
+
 function LoginScreen({ onLogin, responsables, interactores }) {
   const [rol, setRol] = useState("cooperativa");
   const [usuario, setUsuario] = useState("admin");
@@ -166,7 +177,7 @@ function InteractorScreen({ onLogout, ovejas, setOvejas, usuario, interactores }
               <p className="mt-2 text-slate-600">Solo puede registrar referencias.</p>
             <p className="mt-1 text-sm text-slate-500">Interactor activo: {interactores.find(i => i.usuario === usuario)?.nombre || usuario}</p>
             </div>
-            <button onClick={onLogout} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium">Salir</button>
+            <LogoutButton onLogout={onLogout} />
           </div>
         </Card>
 
@@ -209,7 +220,7 @@ function ResponsableScreen({ onLogout, usuario, ovejas }) {
               <h1 className="text-3xl font-bold text-slate-950">Pantalla responsable</h1>
               <p className="mt-2 text-slate-600">Solo puede ver las ovejas de su corral.</p>
             </div>
-            <button onClick={onLogout} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium">Salir</button>
+            <LogoutButton onLogout={onLogout} />
           </div>
         </Card>
 
@@ -342,7 +353,7 @@ function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setRespo
               <h1 className="text-3xl font-bold text-slate-950">Pantalla cooperativa</h1>
               <p className="mt-2 text-slate-600">Puede crear y editar ovejas, responsables y corrales. También consulta todo.</p>
             </div>
-            <button onClick={onLogout} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium">Salir</button>
+            <LogoutButton onLogout={onLogout} />
           </div>
         </Card>
 
