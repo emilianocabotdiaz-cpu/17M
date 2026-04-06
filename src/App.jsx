@@ -6,6 +6,11 @@ const responsablesIniciales = [
   { id: 3, nombre: "Antonio Ruiz", telefono: "600555666", corral: "Corral C", usuario: "antonio" },
 ];
 
+const interactoresIniciales = [
+  { id: 1, nombre: "Pedro Gómez", telefono: "600777111", corral: "Corral A", usuario: "interactor1", activo: true },
+  { id: 2, nombre: "Lucía Romero", telefono: "600777222", corral: "Corral B", usuario: "interactor2", activo: true },
+];
+
 const ovejasIniciales = [
   { referencia: "ES-001245", nombre: "Luna", responsableId: 1, corral: "Corral A", hora: "18:41", registrada: true },
   { referencia: "ES-001246", nombre: "Perla", responsableId: 1, corral: "Corral A", hora: null, registrada: false },
@@ -47,16 +52,12 @@ function StatCard({ title, value }) {
   );
 }
 
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, responsables, interactores }) {
   const [rol, setRol] = useState("cooperativa");
   const [usuario, setUsuario] = useState("admin");
 
   const entrar = () => {
-    if (rol === "responsable") {
-      onLogin({ rol, usuario: usuario || "juan" });
-      return;
-    }
-    onLogin({ rol, usuario: usuario || rol });
+    onLogin({ rol, usuario: usuario || "admin" });
   };
 
   return (
@@ -74,7 +75,9 @@ function LoginScreen({ onLogin }) {
                 onChange={(e) => {
                   const nuevoRol = e.target.value;
                   setRol(nuevoRol);
-                  setUsuario(nuevoRol === "responsable" ? "juan" : nuevoRol === "interactor" ? "interactor" : "admin");
+                  if (nuevoRol === "responsable") setUsuario(responsables[0]?.usuario || "");
+                  else if (nuevoRol === "interactor") setUsuario(interactores[0]?.usuario || "");
+                  else setUsuario("admin");
                 }}
                 className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none"
               >
@@ -92,8 +95,23 @@ function LoginScreen({ onLogin }) {
                   onChange={(e) => setUsuario(e.target.value)}
                   className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none"
                 >
-                  {responsablesIniciales.map((r) => (
+                  {responsables.map((r) => (
                     <option key={r.id} value={r.usuario}>{r.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            {rol === "interactor" ? (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Interactor</label>
+                <select
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
+                  className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none"
+                >
+                  {interactores.filter(i => i.activo).map((i) => (
+                    <option key={i.id} value={i.usuario}>{i.nombre}</option>
                   ))}
                 </select>
               </div>
@@ -109,7 +127,7 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function InteractorScreen({ onLogout, ovejas, setOvejas }) {
+function InteractorScreen({ onLogout, ovejas, setOvejas, usuario, interactores }) {
   const [referencia, setReferencia] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [tipoMensaje, setTipoMensaje] = useState("gray");
@@ -146,6 +164,7 @@ function InteractorScreen({ onLogout, ovejas, setOvejas }) {
             <div>
               <h1 className="text-3xl font-bold text-slate-950">Pantalla interactor</h1>
               <p className="mt-2 text-slate-600">Solo puede registrar referencias.</p>
+            <p className="mt-1 text-sm text-slate-500">Interactor activo: {interactores.find(i => i.usuario === usuario)?.nombre || usuario}</p>
             </div>
             <button onClick={onLogout} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium">Salir</button>
           </div>
@@ -232,7 +251,7 @@ function ResponsableScreen({ onLogout, usuario, ovejas }) {
   );
 }
 
-function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setResponsables, corrales, setCorrales }) {
+function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setResponsables, interactores, setInteractores, corrales, setCorrales }) {
   const [nuevaReferencia, setNuevaReferencia] = useState("");
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoResponsableId, setNuevoResponsableId] = useState(responsables[0]?.id || "");
@@ -243,6 +262,10 @@ function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setRespo
   const [corralResponsable, setCorralResponsable] = useState(corrales[0] || "");
 
   const [nombreCorral, setNombreCorral] = useState("");
+
+  const [nombreInteractor, setNombreInteractor] = useState("");
+  const [telefonoInteractor, setTelefonoInteractor] = useState("");
+  const [corralInteractor, setCorralInteractor] = useState(corrales[0] || "");
 
   const total = ovejas.length;
   const llegadas = ovejas.filter((o) => o.registrada).length;
@@ -292,6 +315,24 @@ function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setRespo
     setNombreCorral("");
   };
 
+  const crearInteractor = () => {
+    if (!nombreInteractor) return;
+    const usuario = nombreInteractor.toLowerCase().split(" ")[0] + interactores.length;
+    setInteractores([
+      ...interactores,
+      {
+        id: Date.now(),
+        nombre: nombreInteractor,
+        telefono: telefonoInteractor,
+        corral: corralInteractor,
+        usuario,
+        activo: true,
+      },
+    ]);
+    setNombreInteractor("");
+    setTelefonoInteractor("");
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 px-5 py-6 md:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -311,7 +352,7 @@ function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setRespo
           <StatCard title="Pendientes" value={pendientes} />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-6 xl:grid-cols-2">
           <Card>
             <h2 className="text-lg font-bold text-slate-950">Alta de oveja</h2>
             <div className="mt-4 space-y-3">
@@ -340,10 +381,52 @@ function CooperativaScreen({ onLogout, ovejas, setOvejas, responsables, setRespo
           </Card>
 
           <Card>
+            <h2 className="text-lg font-bold text-slate-950">Alta de interactor</h2>
+            <div className="mt-4 space-y-3">
+              <input value={nombreInteractor} onChange={(e) => setNombreInteractor(e.target.value)} placeholder="Nombre" className="h-11 w-full rounded-xl border border-slate-200 px-4 outline-none" />
+              <input value={telefonoInteractor} onChange={(e) => setTelefonoInteractor(e.target.value)} placeholder="TLF" className="h-11 w-full rounded-xl border border-slate-200 px-4 outline-none" />
+              <select value={corralInteractor} onChange={(e) => setCorralInteractor(e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 px-4 outline-none">
+                {corrales.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button onClick={crearInteractor} className="h-11 w-full rounded-xl bg-slate-950 text-white font-semibold">Crear interactor</button>
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card>
             <h2 className="text-lg font-bold text-slate-950">Alta de corral</h2>
             <div className="mt-4 space-y-3">
               <input value={nombreCorral} onChange={(e) => setNombreCorral(e.target.value)} placeholder="Nombre del corral" className="h-11 w-full rounded-xl border border-slate-200 px-4 outline-none" />
               <button onClick={crearCorral} className="h-11 w-full rounded-xl bg-slate-950 text-white font-semibold">Crear corral</button>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-lg font-bold text-slate-950">Usuarios dados de alta</h2>
+            <div className="mt-4 space-y-4 text-sm">
+              <div>
+                <div className="mb-2 font-semibold text-slate-900">Responsables</div>
+                <div className="space-y-2">
+                  {responsables.map((r) => (
+                    <div key={r.id} className="rounded-xl border border-slate-200 p-3">
+                      <div className="font-medium">{r.nombre}</div>
+                      <div className="text-slate-500">{r.corral} · {r.telefono}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 font-semibold text-slate-900">Interactores</div>
+                <div className="space-y-2">
+                  {interactores.map((i) => (
+                    <div key={i.id} className="rounded-xl border border-slate-200 p-3">
+                      <div className="font-medium">{i.nombre}</div>
+                      <div className="text-slate-500">{i.corral} · {i.telefono}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </Card>
         </div>
@@ -389,14 +472,15 @@ export default function App() {
   const [sesion, setSesion] = useState(null);
   const [ovejas, setOvejas] = useState(ovejasIniciales);
   const [responsables, setResponsables] = useState(responsablesIniciales);
+  const [interactores, setInteractores] = useState(interactoresIniciales);
   const [corrales, setCorrales] = useState(corralesIniciales);
 
   if (!sesion) {
-    return <LoginScreen onLogin={setSesion} />;
+    return <LoginScreen onLogin={setSesion} responsables={responsables} interactores={interactores} />;
   }
 
   if (sesion.rol === "interactor") {
-    return <InteractorScreen onLogout={() => setSesion(null)} ovejas={ovejas} setOvejas={setOvejas} />;
+    return <InteractorScreen onLogout={() => setSesion(null)} ovejas={ovejas} setOvejas={setOvejas} usuario={sesion.usuario} interactores={interactores} />;
   }
 
   if (sesion.rol === "responsable") {
@@ -410,6 +494,8 @@ export default function App() {
       setOvejas={setOvejas}
       responsables={responsables}
       setResponsables={setResponsables}
+      interactores={interactores}
+      setInteractores={setInteractores}
       corrales={corrales}
       setCorrales={setCorrales}
     />
